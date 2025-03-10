@@ -1,4 +1,4 @@
-module cli_download
+module github.com/EnOane/cli_downloader
 
 go 1.23.0
 
