@@ -1,8 +1,8 @@
 package main
 
 import (
-	"cli_download/downloader"
 	"flag"
+	"github.com/EnOane/cli_downloader/downloader"
 	"github.com/rs/zerolog/log"
 	"net/url"
 )
@@ -13,7 +13,7 @@ func main() {
 	)
 
 	flag.StringVar(&videoUrlStr, "url", "", "link to video")
-	flag.StringVar(&destPath, "dest", "./", "")
+	flag.StringVar(&destPath, "dest", "./", "download folder")
 	flag.Parse()
 
 	videoUrl, err := parseUrl(videoUrlStr)

@@ -6,19 +6,25 @@ import (
 	"net/url"
 	"os/exec"
 	"strings"
+	"time"
 )
 
+// Download загрузка видео с rutube, vk, youtube
 func Download(videoUrl *url.URL, destPath string) {
 	host := videoUrl.Host
-	t := strings.Split(host, ".")[0]
+	host = strings.ReplaceAll(host, "www.", "")
+
+	provider := strings.Split(host, ".")[0]
 
 	execute := func(download func(u string, p string)) {
 		download(videoUrl.String(), destPath)
 	}
 
-	log.Info().Msg(fmt.Sprintf("download video from %v has been started", t))
+	exStart := time.Now()
+	log.Info().Msg(fmt.Sprintf("download video from '%v' has been started", host))
 
-	switch t {
+	// эмуляция разной логики провайдеров
+	switch provider {
 	case "rutube":
 		execute(downloadFromRutube)
 	case "vk":
@@ -28,10 +34,16 @@ func Download(videoUrl *url.URL, destPath string) {
 	case "youtube":
 		execute(downloadFromYoutube)
 	default:
-		log.Fatal().Msg(fmt.Sprintf("downloadVideo from %v not supported", t))
+		log.Fatal().Msg(fmt.Sprintf("download video from %v not supported", provider))
 	}
 
-	log.Info().Msg("video has been downloaded")
+	since := time.Since(exStart)
+
+	if destPath == "./" {
+		log.Info().Msg(fmt.Sprintf("video was downloaded in %v", since))
+	} else {
+		log.Info().Msg(fmt.Sprintf("video was downloaded in %v to path '%v'", since, destPath))
+	}
 }
 
 func downloadFromRutube(videoUrl string, path string) {
