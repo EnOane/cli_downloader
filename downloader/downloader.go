@@ -44,6 +44,8 @@ func Download(videoUrl *url.URL, destPath string) {
 	} else {
 		log.Info().Msg(fmt.Sprintf("video was downloaded in %v to path '%v'", since, destPath))
 	}
+
+	fmt.Println()
 }
 
 func downloadFromRutube(videoUrl string, path string) {
