@@ -1,6 +1,6 @@
 module github.com/EnOane/cli_downloader
 
-go 1.24.1
+go 1.24
 
 require github.com/rs/zerolog v1.33.0
 
