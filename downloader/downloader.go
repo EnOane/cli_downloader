@@ -100,6 +100,7 @@ func downloadVideo(videoUrl string, filename, path string) (string, error) {
 	// TODO: проверка вывода - имя файла
 	p := string(output)
 	name := filepath.Base(p)
+	fileNameWithoutExt := strings.TrimSuffix(name, filepath.Ext(name))
 
-	return name, nil
+	return fileNameWithoutExt, nil
 }
