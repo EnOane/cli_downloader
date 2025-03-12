@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"github.com/EnOane/cli_downloader/downloader"
+	"github.com/EnOane/cli_downloader/pkg/downloader"
 	"github.com/rs/zerolog/log"
 	"net/url"
 )
@@ -21,7 +21,7 @@ func main() {
 		log.Fatal().Msg("url is not valid")
 	}
 
-	_, err = downloader.Download(videoUrl, "", destPath)
+	_, err = downloader.DownloadVideo(videoUrl, destPath)
 	if err != nil {
 		log.Fatal().Msg(err.Error())
 	}
