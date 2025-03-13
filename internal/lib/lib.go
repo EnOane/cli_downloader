@@ -4,12 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
+	"io"
 	"os/exec"
 )
 
 const format = "mp4"
 
-// DownloadAndSave
+// DownloadAndSave скачивание видео в файл
 func DownloadAndSave(videoUrl, destPath string) (string, error) {
 	id := uuid.New().String()
 	template := id + ".%(ext)s"
@@ -23,4 +25,48 @@ func DownloadAndSave(videoUrl, destPath string) (string, error) {
 	}
 
 	return destPath + "/" + id + "." + format, nil
+}
+
+// DownloadStream скачивание видео в поток
+func DownloadStream(videoUrl string) <-chan []byte {
+	out := make(chan []byte)
+
+	// Запускаем yt-dlp для потоковой загрузки видео
+	go func() {
+		defer close(out)
+
+		cmd := exec.Command("yt-dlp", "-o", "-", videoUrl)
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			log.Fatal().Err(err)
+		}
+
+		// Запускаем процесс
+		if err := cmd.Start(); err != nil {
+			log.Fatal().Err(err)
+		}
+
+		buffer := make([]byte, 1024*1024)
+		for {
+			n, err := stdout.Read(buffer)
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatal().Err(err).Msg("Ошибка при чтении данных")
+				return
+			}
+
+			bytes := make([]byte, len(buffer[:n]))
+			copy(bytes, buffer[:n])
+			out <- bytes
+		}
+
+		// Дожидаемся завершения процесса
+		if err := cmd.Wait(); err != nil {
+			log.Fatal().Err(err)
+		}
+	}()
+
+	return out
 }
