@@ -28,14 +28,14 @@ func DownloadAndSave(videoUrl, destPath string) (string, error) {
 }
 
 // DownloadStream скачивание видео в поток
-func DownloadStream(videoUrl string) <-chan []byte {
+func DownloadStream(videoUrl string) (<-chan []byte, string) {
 	out := make(chan []byte)
 
 	// Запускаем yt-dlp для потоковой загрузки видео
 	go func() {
 		defer close(out)
 
-		cmd := exec.Command("yt-dlp", "-o", "-", videoUrl)
+		cmd := exec.Command("yt-dlp", "-f", format, "-o", "-", videoUrl)
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
 			log.Fatal().Err(err)
@@ -57,9 +57,9 @@ func DownloadStream(videoUrl string) <-chan []byte {
 				return
 			}
 
-			bytes := make([]byte, len(buffer[:n]))
-			copy(bytes, buffer[:n])
-			out <- bytes
+			chunk := make([]byte, n)
+			copy(chunk, buffer[:n])
+			out <- chunk
 		}
 
 		// Дожидаемся завершения процесса
@@ -68,5 +68,5 @@ func DownloadStream(videoUrl string) <-chan []byte {
 		}
 	}()
 
-	return out
+	return out, uuid.New().String() + "." + format
 }
