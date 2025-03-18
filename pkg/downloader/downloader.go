@@ -15,12 +15,13 @@ import (
 // TODO: custom filename
 // TODO: custom errors type
 
-// DownloadVideo загрузка видео с rutube, vk, youtube
+// DownloadVideo загрузка видео с rutube, vk, youtube с сохранением файла
 func DownloadVideo(videoUrl *url.URL, destPath string) (string, error) {
 	provider := prepareProviderData(videoUrl)
 	return downloadAndSave(videoUrl, destPath, provider)
 }
 
+// DownloadStreamVideo загрузка видео с rutube, vk, youtube потоком
 func DownloadStreamVideo(videoUrl *url.URL) (<-chan []byte, string, error) {
 	provider := prepareProviderData(videoUrl)
 	return downloadStream(videoUrl, provider)
@@ -39,6 +40,7 @@ func prepareProviderData(videoUrl *url.URL) string {
 func downloadAndSave(videoUrl *url.URL, destPath string, provider string) (string, error) {
 	// время выполнения
 	exStart := time.Now()
+
 	log.Info().Msg(fmt.Sprintf("download video from '%v' has been started", provider))
 
 	// имя сохраненного файла
@@ -53,11 +55,11 @@ func downloadAndSave(videoUrl *url.URL, destPath string, provider string) (strin
 	// TODO: вынести в const
 	// TODO: реализовать DI
 	case "rutube":
-		filenamePath, err = rutube.Download(videoUrlStr, destPath)
+		filenamePath, err = rutube.DownloadAndSave(videoUrlStr, destPath)
 	case "vk", "vkvideo":
-		filenamePath, err = vkvideo.Download(videoUrlStr, destPath)
+		filenamePath, err = vkvideo.DownloadAndSave(videoUrlStr, destPath)
 	case "youtube":
-		filenamePath, err = youtube.Download(videoUrlStr, destPath)
+		filenamePath, err = youtube.DownloadAndSave(videoUrlStr, destPath)
 	default:
 		return "", errors.New(fmt.Sprintf("download video from provider %v not supported", provider))
 	}
@@ -72,9 +74,8 @@ func downloadAndSave(videoUrl *url.URL, destPath string, provider string) (strin
 	return filenamePath, err
 }
 
+// downloadStream логика скачивания потоком
 func downloadStream(videoUrl *url.URL, provider string) (<-chan []byte, string, error) {
-	// время выполнения
-	exStart := time.Now()
 	log.Info().Msg(fmt.Sprintf("download video from '%v' has been started", provider))
 
 	// строковое значение url
@@ -96,8 +97,6 @@ func downloadStream(videoUrl *url.URL, provider string) (<-chan []byte, string, 
 	default:
 		return nil, "", errors.New(fmt.Sprintf("download video from provider %v not supported", provider))
 	}
-
-	log.Info().Msg(fmt.Sprintf("video was downloaded in %v to path '%v'", time.Since(exStart), filename))
 
 	return in, filename, nil
 }
