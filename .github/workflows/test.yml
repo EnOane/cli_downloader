@@ -2,8 +2,6 @@ name: build_app
 
 on:
   push:
-    branches:
-      - main
 
 jobs:
   test:
