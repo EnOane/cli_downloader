@@ -13,12 +13,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Нужно для анализа истории коммитов
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: stable
+          fetch-depth: 0
 
       - name: Install Semantic Release
         run: npm install -g semantic-release @semantic-release/changelog @semantic-release/git @semantic-release/github
