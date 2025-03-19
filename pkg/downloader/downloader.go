@@ -1,7 +1,6 @@
 package downloader
 
 import (
-	"errors"
 	"fmt"
 	"github.com/EnOane/cli_downloader/internal/lib"
 	"github.com/EnOane/cli_downloader/internal/services/rutube"
@@ -87,7 +86,7 @@ func downloadAndSave(dl *downloader, videoUrl *url.URL, destPath string, provide
 	case "youtube":
 		filenamePath, err = dl.yt.DownloadAndSave(videoUrlStr, destPath)
 	default:
-		return "", errors.New(fmt.Sprintf("download video from provider %v not supported", provider))
+		return "", fmt.Errorf("download video from provider %v not supported %w", provider, err)
 	}
 
 	// обработка ошибок
@@ -119,7 +118,7 @@ func downloadStream(dl *downloader, videoUrl *url.URL, provider string) (<-chan 
 	case "youtube":
 		in, filename = dl.yt.DownloadStream(videoUrlStr)
 	default:
-		return nil, "", errors.New(fmt.Sprintf("download video from provider %v not supported", provider))
+		return nil, "", fmt.Errorf("download video from provider %v not supported", provider)
 	}
 
 	return in, filename, nil
