@@ -5,24 +5,82 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"github.com/google/uuid"
+	"github.com/EnOane/cli_downloader/internal/core/interfaces"
 	"github.com/rs/zerolog/log"
 	"io"
 	"os"
 	"os/exec"
 )
 
+// TODO: проверка кодов ошибок yt-dlp
+// TODO: преобразование в формат mp4
+
 const format = "mp4"
 
-type VideoMetadata struct {
-	Id    string `json:"id"`
-	Title string `json:"title"`
+type Lib struct{}
+
+func NewLib() *Lib {
+	return &Lib{}
+}
+
+// DownloadAndSave скачивание видео в файл
+func (r *Lib) DownloadAndSave(videoUrl, filename, destPath string) (string, error) {
+	template := filename + ".%(ext)s"
+
+	cmd := exec.Command("yt-dlp", "-f", format, "-o", template, "--path", destPath, videoUrl)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("download video err: %v, %w", string(output), err)
+	}
+
+	return destPath + "/" + filename + "." + format, nil
+}
+
+// DownloadStream скачивание видео в поток
+func (r *Lib) DownloadStream(videoUrl, filename string) (<-chan []byte, string) {
+	out := make(chan []byte)
+
+	go func() {
+		defer close(out)
+
+		cmd := exec.Command("yt-dlp", "-f", format, "-o", "-", videoUrl)
+		pipe, err := cmd.StdoutPipe()
+		if err != nil {
+			log.Warn().Err(err)
+		}
+
+		if err := cmd.Start(); err != nil {
+			log.Warn().Err(err)
+		}
+
+		buffer := make([]byte, 1024*1024)
+		for {
+			n, err := pipe.Read(buffer)
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Warn().Err(err)
+				return
+			}
+
+			chunk := make([]byte, n)
+			copy(chunk, buffer[:n])
+			out <- chunk
+		}
+
+		if err := cmd.Wait(); err != nil {
+			log.Warn().Err(err)
+			return
+		}
+	}()
+
+	return out, filename + "." + format
 }
 
 // GetVideoMetadata возвращает метаданные видео
-func GetVideoMetadata(videoUrl string) (*VideoMetadata, error) {
+func (r *Lib) GetVideoMetadata(videoUrl string) (*interfaces.VideoMetadata, error) {
 	var out bytes.Buffer
 
 	cmd := exec.Command("yt-dlp", "--dump-json", videoUrl)
@@ -34,7 +92,7 @@ func GetVideoMetadata(videoUrl string) (*VideoMetadata, error) {
 		return nil, fmt.Errorf("error get metadata for: %w; videoUrl: %v", err, videoUrl)
 	}
 
-	var videoInfo VideoMetadata
+	var videoInfo interfaces.VideoMetadata
 
 	err = json.Unmarshal(out.Bytes(), &videoInfo)
 	if err != nil {
@@ -48,7 +106,7 @@ func GetVideoMetadata(videoUrl string) (*VideoMetadata, error) {
 }
 
 // GetHashVideo возвращает hash видео
-func GetHashVideo(filePath string) (string, error) {
+func (r *Lib) GetHashVideo(filePath string) (string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		log.Error().Err(err).Msgf("error open file - %v", filePath)
@@ -69,7 +127,7 @@ func GetHashVideo(filePath string) (string, error) {
 }
 
 // GetVideoFileSize возвращает размер файла
-func GetVideoFileSize(filePath string) (int64, error) {
+func (r *Lib) GetVideoFileSize(filePath string) (int64, error) {
 	stat, err := os.Stat(filePath)
 	if err != nil {
 		log.Error().Err(err).Msgf("error get file size - %v", filePath)
@@ -81,65 +139,4 @@ func GetVideoFileSize(filePath string) (int64, error) {
 	log.Info().Msgf("get file size %v for: %v", size, filePath)
 
 	return size, err
-}
-
-// DownloadAndSave скачивание видео в файл
-func DownloadAndSave(videoUrl, destPath string) (string, error) {
-	id := uuid.New().String()
-	template := id + ".%(ext)s"
-
-	cmd := exec.Command("yt-dlp", "-f", format, "-o", template, "--path", destPath, videoUrl)
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		// TODO: проверка кодов ошибок
-		return "", errors.New(fmt.Sprintf("download video err: %v", string(output)))
-	}
-
-	return destPath + "/" + id + "." + format, nil
-}
-
-// DownloadStream скачивание видео в поток
-func DownloadStream(videoUrl string) (<-chan []byte, string) {
-	out := make(chan []byte)
-
-	// TODO: обработка ошибки в горутине
-	go func() {
-		defer close(out)
-
-		// Запускаем yt-dlp для потоковой загрузки видео
-		cmd := exec.Command("yt-dlp", "-f", format, "-o", "-", videoUrl)
-		stdout, err := cmd.StdoutPipe()
-		if err != nil {
-			log.Fatal().Err(err)
-		}
-
-		// Запускаем процесс
-		if err := cmd.Start(); err != nil {
-			log.Fatal().Err(err)
-		}
-
-		buffer := make([]byte, 1024*1024)
-		for {
-			n, err := stdout.Read(buffer)
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				log.Fatal().Err(err).Msg("Ошибка при чтении данных")
-				return
-			}
-
-			chunk := make([]byte, n)
-			copy(chunk, buffer[:n])
-			out <- chunk
-		}
-
-		// Дожидаемся завершения процесса
-		if err := cmd.Wait(); err != nil {
-			log.Fatal().Err(err)
-		}
-	}()
-
-	return out, uuid.New().String() + "." + format
 }

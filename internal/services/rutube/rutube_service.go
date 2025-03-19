@@ -1,11 +1,26 @@
 package rutube
 
-import "github.com/EnOane/cli_downloader/internal/lib"
+import (
+	"github.com/EnOane/cli_downloader/internal/core/interfaces"
+	"github.com/google/uuid"
+)
 
-func DownloadAndSave(videoUrl, destPath string) (string, error) {
-	return lib.DownloadAndSave(videoUrl, destPath)
+type RutubeService struct {
+	lib interfaces.DownloaderLib
 }
 
-func DownloadStream(videoUrl string) (<-chan []byte, string) {
-	return lib.DownloadStream(videoUrl)
+func NewRutubeService(lib interfaces.DownloaderLib) *RutubeService {
+	return &RutubeService{lib}
+}
+
+func (r *RutubeService) DownloadAndSave(videoUrl, destPath string) (string, error) {
+	id := uuid.New().String()
+
+	return r.lib.DownloadAndSave(videoUrl, id, destPath)
+}
+
+func (r *RutubeService) DownloadStream(videoUrl string) (<-chan []byte, string) {
+	id := uuid.New().String()
+
+	return r.lib.DownloadStream(videoUrl, id)
 }
