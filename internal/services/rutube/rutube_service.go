@@ -5,21 +5,21 @@ import (
 	"github.com/google/uuid"
 )
 
-type RutubeService struct {
+type Service struct {
 	lib interfaces.DownloaderLib
 }
 
-func NewRutubeService(lib interfaces.DownloaderLib) *RutubeService {
-	return &RutubeService{lib}
+func NewRutubeService(lib interfaces.DownloaderLib) interfaces.DownloaderProvider {
+	return &Service{lib}
 }
 
-func (r *RutubeService) DownloadAndSave(videoUrl, destPath string) (string, error) {
+func (r *Service) DownloadAndSave(videoUrl, destPath string) (string, error) {
 	id := uuid.New().String()
 
 	return r.lib.DownloadAndSave(videoUrl, id, destPath)
 }
 
-func (r *RutubeService) DownloadStream(videoUrl string) (<-chan []byte, string) {
+func (r *Service) DownloadStream(videoUrl string) (<-chan []byte, string) {
 	id := uuid.New().String()
 
 	return r.lib.DownloadStream(videoUrl, id)

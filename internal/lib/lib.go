@@ -13,6 +13,8 @@ import (
 	"os/exec"
 )
 
+// TODO: переписать на провадйреы других пакетов
+
 // TODO: проверка кодов ошибок yt-dlp
 // TODO: преобразование в формат mp4
 
@@ -20,7 +22,7 @@ const format = "mp4"
 
 type Lib struct{}
 
-func NewLib() *Lib {
+func NewLib() interfaces.DownloaderLib {
 	return &Lib{}
 }
 

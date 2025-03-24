@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"fmt"
 	"github.com/EnOane/cli_downloader/internal/core/interfaces"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"

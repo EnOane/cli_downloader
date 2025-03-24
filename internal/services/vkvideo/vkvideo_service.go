@@ -5,21 +5,21 @@ import (
 	"github.com/google/uuid"
 )
 
-type VkVideoService struct {
+type Service struct {
 	lib interfaces.DownloaderLib
 }
 
-func NewVkVideoService(lib interfaces.DownloaderLib) *VkVideoService {
-	return &VkVideoService{lib}
+func NewVkVideoService(lib interfaces.DownloaderLib) interfaces.DownloaderProvider {
+	return &Service{lib}
 }
 
-func (v *VkVideoService) DownloadAndSave(videoUrl, destPath string) (string, error) {
+func (v *Service) DownloadAndSave(videoUrl, destPath string) (string, error) {
 	id := uuid.New().String()
 
 	return v.lib.DownloadAndSave(videoUrl, id, destPath)
 }
 
-func (v *VkVideoService) DownloadStream(videoUrl string) (<-chan []byte, string) {
+func (v *Service) DownloadStream(videoUrl string) (<-chan []byte, string) {
 	id := uuid.New().String()
 
 	return v.lib.DownloadStream(videoUrl, id)
