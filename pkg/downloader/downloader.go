@@ -2,10 +2,7 @@ package downloader
 
 import (
 	"fmt"
-	"github.com/EnOane/cli_downloader/internal/lib"
-	"github.com/EnOane/cli_downloader/internal/services/rutube"
-	"github.com/EnOane/cli_downloader/internal/services/vkvideo"
-	"github.com/EnOane/cli_downloader/internal/services/youtube"
+	"github.com/EnOane/cli_downloader/internal/core/interfaces"
 	"github.com/rs/zerolog/log"
 	"net/url"
 	"strings"
@@ -16,42 +13,24 @@ import (
 // TODO: metadata file
 // TODO: вынести в const провайдеров
 
-type downloader struct {
-	yt *youtube.YoutubeService
-	vk *vkvideo.VkVideoService
-	rt *rutube.RutubeService
+type Downloader struct {
+	yt, vk, rt interfaces.DownloaderProvider
 }
 
-var _dl *downloader
-
-func getDownloader() *downloader {
-	if _dl != nil {
-		return _dl
-	}
-
-	downloadLib := lib.NewLib()
-
-	_dl = &downloader{
-		yt: youtube.NewYoutubeService(downloadLib),
-		vk: vkvideo.NewVkVideoService(downloadLib),
-		rt: rutube.NewRutubeService(downloadLib),
-	}
-
-	return _dl
+func NewDownloader(yt, vk, rt interfaces.DownloaderProvider) interfaces.Downloader {
+	return &Downloader{yt, vk, rt}
 }
 
 // DownloadVideo загрузка видео с rutube, vk, youtube с сохранением файла
-func DownloadVideo(videoUrl *url.URL, destPath string) (string, error) {
-	dl := getDownloader()
+func (d *Downloader) DownloadVideo(videoUrl *url.URL, destPath string) (string, error) {
 	provider := prepareProviderData(videoUrl)
-	return downloadAndSave(dl, videoUrl, destPath, provider)
+	return downloadAndSave(d, videoUrl, destPath, provider)
 }
 
 // DownloadStreamVideo загрузка видео с rutube, vk, youtube потоком
-func DownloadStreamVideo(videoUrl *url.URL) (<-chan []byte, string, error) {
-	dl := getDownloader()
+func (d *Downloader) DownloadStreamVideo(videoUrl *url.URL) (<-chan []byte, string, error) {
 	provider := prepareProviderData(videoUrl)
-	return downloadStream(dl, videoUrl, provider)
+	return downloadStream(d, videoUrl, provider)
 }
 
 // prepareProviderData возвращает наименование провайдера
@@ -64,7 +43,7 @@ func prepareProviderData(videoUrl *url.URL) string {
 }
 
 // downloadAndSave логика скачивания и сохранения
-func downloadAndSave(dl *downloader, videoUrl *url.URL, destPath string, provider string) (string, error) {
+func downloadAndSave(dl *Downloader, videoUrl *url.URL, destPath string, provider string) (string, error) {
 	// время выполнения
 	exStart := time.Now()
 
@@ -100,7 +79,7 @@ func downloadAndSave(dl *downloader, videoUrl *url.URL, destPath string, provide
 }
 
 // downloadStream логика скачивания потоком
-func downloadStream(dl *downloader, videoUrl *url.URL, provider string) (<-chan []byte, string, error) {
+func downloadStream(dl *Downloader, videoUrl *url.URL, provider string) (<-chan []byte, string, error) {
 	log.Info().Msg(fmt.Sprintf("download video from '%v' has been started", provider))
 
 	// строковое значение url

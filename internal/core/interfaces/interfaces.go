@@ -1,5 +1,7 @@
 package interfaces
 
+import "net/url"
+
 type VideoMetadata struct {
 	Id    string `json:"id"`
 	Title string `json:"title"`
@@ -16,4 +18,9 @@ type DownloaderLib interface {
 type DownloaderProvider interface {
 	DownloadAndSave(videoUrl, destPath string) (string, error)
 	DownloadStream(videoUrl string) (<-chan []byte, string)
+}
+
+type Downloader interface {
+	DownloadVideo(videoUrl *url.URL, destPath string) (string, error)
+	DownloadStreamVideo(videoUrl *url.URL) (<-chan []byte, string, error)
 }

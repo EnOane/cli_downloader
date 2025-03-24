@@ -2,12 +2,15 @@ package main
 
 import (
 	"flag"
-	"github.com/EnOane/cli_downloader/pkg/downloader"
+	"github.com/EnOane/cli_downloader/internal/core/interfaces"
+	"github.com/EnOane/cli_downloader/internal/di"
 	"github.com/rs/zerolog/log"
 	"net/url"
 )
 
 func main() {
+	di.MakeDIContainer()
+
 	var (
 		videoUrlStr, destPath string
 	)
@@ -21,7 +24,9 @@ func main() {
 		log.Fatal().Msg("url is not valid")
 	}
 
-	_, err = downloader.DownloadVideo(videoUrl, destPath)
+	dl := di.Inject[interfaces.Downloader]()
+
+	_, err = dl.DownloadVideo(videoUrl, destPath)
 	if err != nil {
 		log.Fatal().Msg(err.Error())
 	}
